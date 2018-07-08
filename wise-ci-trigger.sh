@@ -25,6 +25,7 @@ admin_token='Token I******************************E'
 trigger_result=`curl -s -X POST -H "${web_header}" -H "Authorization: ${admin_token}" http://"${server_url}"/api/projects/"$2"/pipelines/"$3"/trigger | jq '.text' | sed 's/\"//g'`
 
 if [ -z $trigger_result ]; then
+  echo "Pipeline may not have been triggered."
   exit 1;
 else 
   if [ $trigger_result != "流水线触发成功" ] ; then
@@ -35,6 +36,11 @@ fi
 curl -s -X GET -s -H "${web_header}" -H "Authorization: ${admin_token}" http://"${server_url}"/api/tenants/"$1"/pipelines > ./pipelines-info.txt
 
 pipeline_uuid=`cat ./pipelines-info.txt | jq ".[] |select(.project.id==$2)|.pipelines[] |select(.id==$3) |.uuid" |sed 's/\"//g'`
+
+if [ -z $pipeline_uuid ]; then
+  echo "Pipeline UUID is null. Please check the parameters."
+  exit 1;
+fi
 
 echo Project-ID: $2 / Pipeline-ID: $3 / Pipeline-UUID: $pipeline_uuid / Status: Started
 if [ $4 = wait ]; then
